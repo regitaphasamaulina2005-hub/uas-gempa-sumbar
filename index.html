@@ -1,76 +1,92 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8" />
-  <title>Peta Gempa Sumatra Barat</title>
+  <meta charset="utf-8">
+  <title>Peta Sebaran Gempa Sumatra Barat</title>
 
-  <!-- Leaflet Map -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-  <!-- PapaParse CSV Reader -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <!-- PapaParse CSV loader -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
   <style>
-    body{font-family: Arial;margin:20px;}
-    #map{height:500px;margin-top:10px;}
+    body { 
+      font-family: Arial; 
+      margin: 20px;
+    }
+    #map { 
+      height: 520px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 
 <body>
 
-<h2>📍 Peta Sebaran Gempa Bumi di Sumatra Barat</h2>
+  <h2>📍 Peta Sebaran Gempa Bumi di Sumatra Barat</h2>
+  <p>Dataset hasil filtering dari Kaggle di wilayah Sumatra Barat</p>
 
-<p>Dataset hasil filtering dari Kaggle di wilayah Sumatra Barat</p>
+  <div id="map"></div>
 
-<div id="map"></div>
+  <script>
 
-<script>
-  var map = L.map("map").setView([-0.95, 100.35], 6);
+    // Inisialisasi map ke wilayah Sumbar
+    var map = L.map("map").setView([-0.9, 100.35], 7);
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 18
-  }).addTo(map);
-
-  Papa.parse("https://regitaphasamaulina2005-hub.github.io/uas-gempa-sumbar/gempa_sumatra_barat.csv", {
-
-    download: true,
-    header: true,
-	 delimiter: ";",
-    complete: function(results){
-
-      console.log(results.data[0]);
-	  results.data.forEach(r => {
-
-  // hapus spasi & tanda kutip
-  let lat = Number(r.latitude.replace(/"/g, '').trim());
-  let lon = Number(r.longitude.replace(/"/g, '').trim());
-  let mag = Number(r.magnitude);
-
-  // cek apakah terbaca
-  console.log("DATA:", lat, lon, mag, r.location);
-
-  if (!lat || !lon) return;
-
-  L.circleMarker([lat, lon], {
-    radius: Math.max(mag, 2),
-    color: "red",
-    fillColor: "orange",
-    fillOpacity: 0.6
-  })
-  .bindPopup(
-    "<b>" + r.location + "</b><br>" +
-    "Magnitude : " + mag + "<br>" +
-    r.datetime
-  )
-  .addTo(map);
-});
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 18
+    }).addTo(map);
 
 
+    // ================================
+    // LOAD CSV GEMPA
+    // ================================
+    Papa.parse("gempa_sumatra_barat.csv", {
+      download: true,
+      header: true,
 
-    }
-  });
-</script>
+      complete: function(results){
+
+        console.log("DATA LOADED", results.data.length);
+
+        results.data.forEach(r => {
+
+          // debug (biar kelihatan kalau ada yang aneh)
+          console.log("ROW", r);
+
+          // amankan data dari spasi & tanda kutip
+          let lat = Number(r.latitude?.trim());
+          let lon = Number(r.longitude?.trim());
+          let mag = Number(r.magnitude?.trim());
+
+          // skip baris kosong
+          if (isNaN(lat) || isNaN(lon)) return;
+
+          // radius min 2 supaya kelihatan
+          let radius = Math.max(mag * 2, 3);
+
+          L.circleMarker([lat, lon], {
+            radius: radius,
+            color: "red",
+            fillColor: "orange",
+            fillOpacity: 0.6
+          })
+          .bindPopup(
+            "<b>" + (r.location || "Tidak ada lokasi") + "</b><br>" +
+            "Magnitude : " + mag + "<br>" +
+            (r.datetime || "")
+          )
+          .addTo(map);
+
+        });
+
+      }
+
+    });
+
+  </script>
 
 </body>
 </html>
