@@ -32,35 +32,40 @@
     maxZoom: 18
   }).addTo(map);
 
-  Papa.parse("gempa_sumatra_barat.csv", {
+  Papa.parse("https://regitaphasamaulina2005-hub.github.io/uas-gempa-sumbar/gempa_sumatra_barat.csv", {
+
     download: true,
     header: true,
 	 delimiter: ";",
     complete: function(results){
 
       console.log(results.data[0]);
-	  results.data.forEach(r=>{
+	  results.data.forEach(r => {
 
-    let lat = parseFloat(r.latitude);
-    let lon = parseFloat(r.longitude);
-    let mag = parseFloat(r.magnitude);
+  // hapus spasi & tanda kutip
+  let lat = Number(r.latitude.replace(/"/g, '').trim());
+  let lon = Number(r.longitude.replace(/"/g, '').trim());
+  let mag = Number(r.magnitude);
 
-    if(!isNaN(lat) && !isNaN(lon)){
+  // cek apakah terbaca
+  console.log("DATA:", lat, lon, mag, r.location);
 
-        L.circleMarker([lat, lon],{
-            radius: Math.max(mag, 2),   // supaya terlihat
-            color: "red",
-            fillColor: "orange",
-            fillOpacity: 0.6
-        })
-        .bindPopup(
-            "<b>"+r.location+"</b><br>" +
-            "Mag : "+mag+"<br>" +
-            r.datetime
-        )
-        .addTo(map);
-    }
+  if (!lat || !lon) return;
+
+  L.circleMarker([lat, lon], {
+    radius: Math.max(mag, 2),
+    color: "red",
+    fillColor: "orange",
+    fillOpacity: 0.6
+  })
+  .bindPopup(
+    "<b>" + r.location + "</b><br>" +
+    "Magnitude : " + mag + "<br>" +
+    r.datetime
+  )
+  .addTo(map);
 });
+
 
 
     }
